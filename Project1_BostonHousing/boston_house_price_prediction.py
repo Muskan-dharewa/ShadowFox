@@ -1,17 +1,32 @@
 # boston_house_price_prediction.py
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from sklearn.preprocessing import StandardScaler
 
 # -------------------- 1. Load Dataset --------------------
-df = pd.read_csv(r"C:\Users\muska\OneDrive\Desktop\g-demo\ShadowFox\HousingData.csv")
+# Get the directory where the script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Build the path to the CSV file
+csv_path = os.path.join(script_dir, "HousingData.csv")
+print("Loading CSV from:", csv_path)
+
+# Load dataset
+df = pd.read_csv(csv_path)
 print("First 5 rows of dataset:")
 print(df.head())
+
+# Optional: check for correlation
+plt.figure(figsize=(10, 8))
+sns.heatmap(df.corr(), annot=True, cmap="coolwarm")
+plt.title("Feature Correlation Heatmap", fontsize=14, fontweight="bold")
+plt.show()
 
 # -------------------- 2. Data Preprocessing --------------------
 # Handle missing values
@@ -40,10 +55,12 @@ y_pred = model.predict(X_test)
 # -------------------- 6. Evaluation --------------------
 mse = mean_squared_error(y_test, y_pred)
 rmse = np.sqrt(mse)
+mae = mean_absolute_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 
 print("\nModel Evaluation:")
 print(f"RMSE: {rmse:.2f}")
+print(f"MAE: {mae:.2f}")
 print(f"R² Score: {r2:.2f}")
 
 # -------------------- 7. Enhanced Visualization --------------------
@@ -68,4 +85,33 @@ plt.xlabel("Error (Actual - Predicted)")
 plt.grid(True, linestyle='--', alpha=0.7)
 
 plt.tight_layout()
+plt.show()
+
+# -------------------- 8. Additional Insights --------------------
+# Create a DataFrame for actual and predicted values
+pred_df = pd.DataFrame({
+    "Actual Price": y_test,
+    "Predicted Price": y_pred
+})
+
+# Sort by predicted prices
+pred_df_sorted = pred_df.sort_values(by="Predicted Price").reset_index(drop=True)
+
+print("\nHouses ranked from lowest to highest predicted price:")
+print(pred_df_sorted.head(10))  # Show top 10 as example
+
+print("\nTop 5 most expensive houses (predicted):")
+print(pred_df_sorted.tail(5))
+
+print("\nBottom 5 cheapest houses (predicted):")
+print(pred_df_sorted.head(5))
+
+# Line plot of predicted prices distribution
+plt.figure(figsize=(10, 4))
+plt.plot(range(len(pred_df_sorted)), pred_df_sorted["Predicted Price"], marker='o', linestyle='-',
+         color="green", alpha=0.7)
+plt.title("Predicted House Prices Ranked from Lowest to Highest", fontsize=14, fontweight="bold")
+plt.xlabel("House Index (Sorted by Predicted Price)")
+plt.ylabel("Predicted Price")
+plt.grid(True, linestyle='--', alpha=0.7)
 plt.show()
